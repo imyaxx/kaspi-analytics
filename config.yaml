@@ -1,0 +1,95 @@
+# ============================================================================
+# Kaspi Analytics — runtime configuration
+# Everything the parser needs lives here. No hardcode in the code.
+# ============================================================================
+
+# Target market
+city:
+  id: "750000000"       # Almaty
+  name: "Almaty"
+
+# Which categories to parse.
+# Codes come from Kaspi's `treeCategory.items[].id` (suffix after `:category:`).
+# Use `nested: true` to parse everything beneath a root, or list leaves explicitly.
+categories:
+  whitelist:
+    # Clothing
+    - code: "Women fashion"
+      title: "Одежда — Женщинам"
+      nested: true
+    - code: "Men fashion"
+      title: "Одежда — Мужчинам"
+      nested: true
+
+    # Accessories
+    - code: "Travel gear"
+      title: "Сумки, чемоданы, кошельки"
+      nested: true
+
+    # Home
+    - code: "Home textiles"
+      title: "Домашний текстиль"
+      nested: true
+
+    # Jewelry (full root)
+    - code: "Jewelry and Bijouterie"
+      title: "Украшения"
+      nested: true
+
+    # Kids (full root)
+    - code: "Child goods"
+      title: "Детские товары"
+      nested: true
+
+    # Small kitchen appliances
+    - code: "Kitchen appliances"
+      title: "Мелкая техника для кухни"
+      nested: true
+
+# Popularity filter — only "worth tracking" products go into DB.
+# Reasoning: analytics on dead SKUs is noise.
+popularity:
+  min_reviews: 50          # at least 50 reviews
+  min_rating: 4.0          # at least 4.0 stars
+  require_in_stock: true   # must be available
+
+# HTTP client behaviour
+http:
+  base_url: "https://kaspi.kz"
+  requests_per_second: 6       # gentle on Kaspi, still fast
+  max_concurrent: 8            # parallel in-flight requests
+  timeout_seconds: 20
+  retries: 4                   # exponential backoff on 429/5xx
+  backoff_base: 1.5            # seconds
+  backoff_max: 60
+
+  # Headers mimic a real desktop browser
+  user_agents:
+    - "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_4) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15"
+    - "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+    - "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+
+# Pagination strategy
+pagination:
+  page_size: 12                # Kaspi's fixed page size
+  max_pages_per_query: 400     # Kaspi caps results around 5000 items (≈416 pages)
+  stop_on_empty_pages: 2       # safety: bail if N empty pages in a row
+
+# Database
+database:
+  # Read connection string from env first, fall back to these parts
+  host: "${POSTGRES_HOST:localhost}"
+  port: 5432
+  name: "${POSTGRES_DB:kaspi}"
+  user: "${POSTGRES_USER:kaspi}"
+  password: "${POSTGRES_PASSWORD:kaspi_dev_password}"
+  pool_size: 20
+  max_overflow: 10
+  echo: false                  # set true for SQL debug
+
+# Logging
+logging:
+  level: "INFO"                # DEBUG / INFO / WARNING / ERROR
+  file: "logs/parser.log"
+  rotation: "100 MB"
+  retention: "14 days"

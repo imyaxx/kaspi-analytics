@@ -1,0 +1,50 @@
+services:
+  postgres:
+    image: timescale/timescaledb:latest-pg16
+    container_name: kaspi-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-kaspi}
+      POSTGRES_USER: ${POSTGRES_USER:-kaspi}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-kaspi_dev_password}
+      TS_TUNE_MEMORY: 4GB
+      TS_TUNE_NUM_CPUS: 4
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-kaspi} -d ${POSTGRES_DB:-kaspi}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    command:
+      - "postgres"
+      - "-c"
+      - "max_connections=200"
+      - "-c"
+      - "shared_buffers=1GB"
+      - "-c"
+      - "effective_cache_size=3GB"
+      - "-c"
+      - "work_mem=16MB"
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: kaspi-pgadmin
+    restart: unless-stopped
+    profiles: ["tools"]
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@kaspi.local}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+    driver: local
