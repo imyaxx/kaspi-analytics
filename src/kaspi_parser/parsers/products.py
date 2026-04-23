@@ -23,6 +23,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from kaspi_parser.api.client import KaspiClient
 from kaspi_parser.api.schemas import ProductCard
 from kaspi_parser.config import Settings
+from kaspi_parser.core.exceptions import EndOfResultsError
 from kaspi_parser.db import repository as repo
 from kaspi_parser.filters.popularity import PopularityFilter
 from kaspi_parser.parsers.category_tree import CrawlTarget
@@ -166,6 +167,10 @@ class ProductParser:
                         page=page - 1,
                     )
                     cards = resp.data
+                except EndOfResultsError:
+                    # Kaspi's hard cap (~5000 items). Stop the whole category.
+                    stop_event.set()
+                    return []
                 except Exception as e:
                     logger.warning("page {} failed for {}: {}", page, target.code, e)
                     stats.errors += 1

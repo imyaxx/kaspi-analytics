@@ -29,7 +29,7 @@ from tenacity import (
 )
 
 from kaspi_parser.config import HttpSettings
-from kaspi_parser.core.exceptions import KaspiApiError, RateLimitedError
+from kaspi_parser.core.exceptions import EndOfResultsError, KaspiApiError, RateLimitedError
 
 # Status codes we'll retry on.
 _RETRY_STATUSES = {408, 425, 429, 500, 502, 503, 504}
@@ -133,6 +133,13 @@ class HttpClient:
         if response.status_code == 429:
             logger.warning("Rate limited by Kaspi at {}", url)
             raise RateLimitedError("Kaspi returned 429", status=429, url=url)
+
+        # Kaspi returns 400 on the `results` endpoint once we walk past its
+        # internal 5000-item cap. That's a normal end-of-data signal.
+        if response.status_code == 400 and "/pl/results" in url:
+            raise EndOfResultsError(
+                "Kaspi end-of-results sentinel", status=400, url=url
+            )
 
         if response.status_code in _RETRY_STATUSES:
             raise KaspiApiError(
