@@ -19,6 +19,7 @@ dependencies = [
     # Database
     "sqlalchemy[asyncio]>=2.0.30",
     "asyncpg>=0.29.0",
+    "psycopg[binary]>=3.2.0",
     "alembic>=1.13.0",
 
     # Config & logging
@@ -28,6 +29,10 @@ dependencies = [
 
     # CLI entrypoint
     "typer>=0.12.0",
+
+    # HTTP API for the dashboard
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.30.0",
 ]
 
 [project.optional-dependencies]
@@ -40,13 +45,14 @@ dev = [
 
 [project.scripts]
 kaspi = "kaspi_parser.main:app"
+kaspi-api = "kaspi_api.main:app"
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/kaspi_parser"]
+packages = ["src/kaspi_parser", "api/src/kaspi_api"]
 
 [tool.ruff]
 line-length = 100

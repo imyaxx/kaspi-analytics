@@ -1,0 +1,1 @@
+"""Kaspi Analytics HTTP API."""
