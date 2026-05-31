@@ -214,13 +214,4 @@ mypy src
 pytest
 ```
 
-## Roadmap
 
-- [ ] Dashboard (Next.js + shadcn/ui) reading from `product_snapshots`
-- [ ] Autopricing module using Kaspi Merchant API with configurable floor price
-- [ ] Competitor deep-scan via `/yml/offer-view/offers/{sku}` for top-N SKUs
-- [ ] Scheduled runs via systemd timer or Docker cron
-
-## License
-
-Private / internal use.
